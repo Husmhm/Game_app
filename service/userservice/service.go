@@ -7,7 +7,7 @@ import (
 )
 
 type Repository interface {
-	IsphoneNumberUnique(phoneNumber string) (bool, error)
+	IsPhoneNumberUnique(phoneNumber string) (bool, error)
 	Register(u entity.User) (entity.User, error)
 }
 
@@ -24,6 +24,10 @@ type RegisterResponse struct {
 	User entity.User
 }
 
+func NewService(repo Repository) Service {
+	return Service{repo: repo}
+}
+
 func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 	// TODO - We should verify phone number by verification code
 	//validate phone number
@@ -32,7 +36,7 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 	}
 
 	// check uniqueness of phone number
-	if isUnique, err := s.repo.IsphoneNumberUnique(req.PhoneNumber); err != nil || !isUnique {
+	if isUnique, err := s.repo.IsPhoneNumberUnique(req.PhoneNumber); err != nil || !isUnique {
 
 		if err != nil {
 			return RegisterResponse{}, fmt.Errorf("unexpected error : %w", err)

@@ -12,9 +12,9 @@ func (d *MySQLDB) IsPhoneNumberUnique(phoneNumber string) (bool, error) {
 	fmt.Println(phoneNumber)
 	row := d.db.QueryRow(`SELECT * FROM users WHERE phone_number = ?`, phoneNumber)
 	err := row.Scan(&user.ID, &user.Name, &user.PhoneNumber, &createdAt)
-	fmt.Println(row)
-	fmt.Println(err)
-	//fmt.Println(user)
+	//fmt.Println(row)
+	//fmt.Println(err)
+	////fmt.Println(user)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return true, nil

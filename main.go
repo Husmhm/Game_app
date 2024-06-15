@@ -1,36 +1,54 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"gameApp/entity"
 	"gameApp/repository/mysql"
+	"gameApp/service/userservice"
+	"io"
+	"log"
+	"net/http"
 )
 
 func main() {
-	testUserMysqlRepo()
+	http.HandleFunc("/users/register", userRegisterHandler)
+	http.HandleFunc("/health-check", healthCheckHandler)
+
+	log.Println("server start on port 8080...")
+	http.ListenAndServe(":8080", nil)
 }
-func testUserMysqlRepo() {
-	mysqlRepo := mysql.New()
 
-	user := entity.User{
-		ID:          0,
-		PhoneNumber: "0919",
-		Name:        "Hossein ",
+func userRegisterHandler(writer http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		//res.WriteHeader(http.StatusMethodNotAllowed)
+		fmt.Fprintf(writer, `{"error": "invalid method"}`)
 	}
-	isUnique, err := mysqlRepo.IsPhoneNumberUnique(user.PhoneNumber)
+	data, err := io.ReadAll(req.Body)
 	if err != nil {
-		fmt.Println("unique err", err)
+		//fmt.Fprintf(writer, `{"error": "reading request body failed"}`)
+		writer.Write([]byte(fmt.Sprintf("error:%s", err.Error())))
+		return
 	}
 
-	fmt.Println("isUnique", isUnique)
-	if isUnique == true {
-		createdUser, err := mysqlRepo.Register(user)
+	var uReq userservice.RegisterRequest
+	err = json.Unmarshal(data, &uReq)
 
-		if err != nil {
-			fmt.Println("register user", err)
-		} else {
-			fmt.Println("created user", createdUser)
-		}
+	if err != nil {
+		writer.Write([]byte(fmt.Sprintf("error:%s", err.Error())))
+		return
 	}
 
+	mysqlRepo := mysql.New()
+	userSvc := userservice.NewService(mysqlRepo)
+
+	_, err = userSvc.Register(uReq)
+	if err != nil {
+		writer.Write([]byte(fmt.Sprintf("error:%s", err.Error())))
+		return
+	}
+
+	writer.Write([]byte(`{"message": "user created"}`))
+}
+func healthCheckHandler(writer http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(writer, `{"message": "everything is good!"}`)
 }
