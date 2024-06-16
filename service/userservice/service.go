@@ -1,7 +1,6 @@
 package userservice
 
 import (
-	"encoding/hex"
 	"fmt"
 	"gameApp/entity"
 	"gameApp/pkg/phonenumber"
@@ -11,6 +10,7 @@ import (
 type Repository interface {
 	IsPhoneNumberUnique(phoneNumber string) (bool, error)
 	Register(u entity.User) (entity.User, error)
+	GetUserByPhoneNumber(phoneNumber string) (entity.User, bool, error)
 }
 
 type Service struct {
@@ -62,14 +62,14 @@ func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
 	if len(req.Password) < 8 {
 		return RegisterResponse{}, fmt.Errorf("password lentgth should be greater than 8")
 	}
-	// created new user in storage
+	// hash password by bycript
 	pass := []byte(req.Password)
 	hash, err := bcrypt.GenerateFromPassword(pass, bcrypt.DefaultCost)
-	hashStr := hex.EncodeToString(hash)
+	hashStr := string(hash)
 	if err != nil {
 		panic(err)
 	}
-
+	// created new user in storage
 	user := entity.User{
 		ID:          0,
 		PhoneNumber: req.PhoneNumber,
@@ -95,13 +95,23 @@ type LoginRequest struct {
 type LoginResponse struct {
 }
 
-func (s Service) Login(req RegisterRequest) (RegisterResponse, error) {
+func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 	// check existence phone number from repository
-
 	// get the user by phone number
+	user, exist, err := s.repo.GetUserByPhoneNumber(req.PhoneNumber)
+	if err != nil {
+		return LoginResponse{}, fmt.Errorf("unexpected error : %w", err)
+	}
 
+	if !exist {
+		return LoginResponse{}, fmt.Errorf("user does not exist")
+	}
 	// compare user.Password with the req.Password
 
+	hErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if hErr != nil {
+		return LoginResponse{}, fmt.Errorf("invalid password")
+	}
 	// return ok
-	panic("implement me")
+	return LoginResponse{}, nil
 }
