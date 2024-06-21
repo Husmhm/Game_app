@@ -10,13 +10,21 @@ import (
 	"net/http"
 )
 
+const (
+	Jwt_SignKey = "jwt_secret"
+)
+
 func main() {
 	http.HandleFunc("/users/register", userRegisterHandler)
 	http.HandleFunc("/health-check", healthCheckHandler)
 	http.HandleFunc("/users/login", userLoginHandler)
+	http.HandleFunc("users/profile", userPeofileHandler)
 
-	log.Println("server start on port 8080...")
-	http.ListenAndServe(":8080", nil)
+	log.Println("server start on port 8088...")
+	err := http.ListenAndServe(":8088", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func userRegisterHandler(writer http.ResponseWriter, req *http.Request) {
@@ -40,7 +48,7 @@ func userRegisterHandler(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	mysqlRepo := mysql.New()
-	userSvc := userservice.NewService(mysqlRepo)
+	userSvc := userservice.NewService(mysqlRepo, Jwt_SignKey)
 
 	_, err = userSvc.Register(uReq)
 	if err != nil {
@@ -75,13 +83,43 @@ func userLoginHandler(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	mysqlRepo := mysql.New()
-	userSvc := userservice.NewService(mysqlRepo)
+	userSvc := userservice.NewService(mysqlRepo, Jwt_SignKey)
 
-	_, err = userSvc.Login(lReq)
+	resp, err := userSvc.Login(lReq)
+	if err != nil {
+		writer.Write([]byte(fmt.Sprintf("error:%s", err.Error())))
+		return
+	}
+	data, err = json.Marshal(resp)
 	if err != nil {
 		writer.Write([]byte(fmt.Sprintf("error:%s", err.Error())))
 		return
 	}
 
-	writer.Write([]byte(`{"message": "user credentials is ok"}`))
+	writer.Write(data)
+}
+
+func userPeofileHandler(writer http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodGet {
+		fmt.Fprintf(writer, `{"error": "invalid method"}`)
+	}
+
+	pReq := userservice.ProfileRequest{UserID: 0}
+	mysqlRepo := mysql.New()
+	userSvc := userservice.NewService(mysqlRepo, Jwt_SignKey)
+
+	resp, err := userSvc.Profile(pReq)
+
+	if err != nil {
+		writer.Write([]byte(fmt.Sprintf("error:%s", err.Error())))
+		return
+	}
+
+	data, err := json.Marshal(resp)
+	if err != nil {
+		writer.Write([]byte(fmt.Sprintf("error:%s", err.Error())))
+		return
+	}
+
+	writer.Write(data)
 }

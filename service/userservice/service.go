@@ -4,17 +4,21 @@ import (
 	"fmt"
 	"gameApp/entity"
 	"gameApp/pkg/phonenumber"
+	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
+	"time"
 )
 
 type Repository interface {
 	IsPhoneNumberUnique(phoneNumber string) (bool, error)
 	Register(u entity.User) (entity.User, error)
 	GetUserByPhoneNumber(phoneNumber string) (entity.User, bool, error)
+	GetUserById(id uint) (entity.User, error)
 }
 
 type Service struct {
-	repo Repository
+	signkey string
+	repo    Repository
 }
 
 type RegisterRequest struct {
@@ -27,8 +31,8 @@ type RegisterResponse struct {
 	User entity.User
 }
 
-func NewService(repo Repository) Service {
-	return Service{repo: repo}
+func NewService(repo Repository, signkey string) Service {
+	return Service{repo: repo, signkey: signkey}
 }
 
 func (s Service) Register(req RegisterRequest) (RegisterResponse, error) {
@@ -92,7 +96,9 @@ type LoginRequest struct {
 	Password    string `json:"password"`
 }
 
+// generate jwt token
 type LoginResponse struct {
+	AccessToken string `json:"access_token"`
 }
 
 func (s Service) Login(req LoginRequest) (LoginResponse, error) {
@@ -113,5 +119,62 @@ func (s Service) Login(req LoginRequest) (LoginResponse, error) {
 		return LoginResponse{}, fmt.Errorf("invalid password")
 	}
 	// return ok
-	return LoginResponse{}, nil
+	token, err := createToken(user.ID, s.signkey)
+	if err != nil {
+		return LoginResponse{}, fmt.Errorf("unexpected error : %w", err)
+	}
+	return LoginResponse{AccessToken: token}, nil
+}
+
+type ProfileRequest struct {
+	UserID uint
+}
+
+type ProfileResponse struct {
+	Name string `json:"name"`
+}
+
+// all request inputs for interactor/service should be sanitized.
+
+func (s Service) Profile(req ProfileRequest) (ProfileResponse, error) {
+	// getUserByID
+	user, err := s.repo.GetUserById(req.UserID)
+	if err != nil {
+		// I don't expect the repository call return "record not found" error,
+		// because I assume the interactor input is sanitized.
+		// TODO - we can use Rich Error.
+		return ProfileResponse{}, fmt.Errorf("unexpected error: %w", err)
+	}
+
+	return ProfileResponse{Name: user.Name}, nil
+}
+
+type Claims struct {
+	RegisteredClaims jwt.RegisteredClaims
+	UserID           uint
+}
+
+func (c Claims) Valid() error {
+	return nil
+}
+
+func createToken(userID uint, signKey string) (string, error) {
+	// create a signer for rsa 256
+	// TODO - replace with rsa 256 RS256 - https://github.com/golang-jwt/jwt/blob/main/http_example_test.go
+
+	// set our claims
+	claims := Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)),
+		},
+		UserID: userID,
+	}
+
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := accessToken.SignedString([]byte(signKey))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
