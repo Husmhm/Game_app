@@ -8,32 +8,31 @@ import (
 	"time"
 )
 
-type Service struct {
-	signKey               string
-	accessExpirationTime  time.Duration
-	refreshExpirationTime time.Duration
-	accessTokenSubject    string
-	refreshTokenSubject   string
+type Config struct {
+	SignKey               string
+	AccessExpirationTime  time.Duration
+	RefreshExpirationTime time.Duration
+	AccessTokenSubject    string
+	RefreshTokenSubject   string
 }
 
-func New(signKey string, accessExpirationTime time.Duration, refreshExpirationTime time.Duration,
-	accessTokenSubject string, refreshTokenSubject string) Service {
+type Service struct {
+	config Config
+}
+
+func New(cfg Config) Service {
 	return Service{
-		signKey:               signKey,
-		accessExpirationTime:  accessExpirationTime,
-		refreshExpirationTime: refreshExpirationTime,
-		accessTokenSubject:    accessTokenSubject,
-		refreshTokenSubject:   refreshTokenSubject,
+		config: cfg,
 	}
 
 }
 
 func (s Service) CreateAccessToken(user entity.User) (string, error) {
-	return s.createToken(user.ID, s.accessExpirationTime, s.accessTokenSubject)
+	return s.createToken(user.ID, s.config.AccessExpirationTime, s.config.AccessTokenSubject)
 }
 
 func (s Service) CreateRefreshToken(user entity.User) (string, error) {
-	return s.createToken(user.ID, s.refreshExpirationTime, s.refreshTokenSubject)
+	return s.createToken(user.ID, s.config.RefreshExpirationTime, s.config.RefreshTokenSubject)
 }
 
 func (s Service) ParseToken(bearerToken string) (*Claims, error) {
@@ -42,7 +41,7 @@ func (s Service) ParseToken(bearerToken string) (*Claims, error) {
 	fmt.Println("new string", tokenStr)
 
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(s.signKey), nil
+		return []byte(s.config.SignKey), nil
 	})
 	if err != nil {
 		return nil, err
@@ -69,7 +68,7 @@ func (s Service) createToken(userID uint, expireDuratipn time.Duration, subject 
 	}
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := accessToken.SignedString([]byte(s.signKey))
+	tokenString, err := accessToken.SignedString([]byte(s.config.SignKey))
 	if err != nil {
 		return "", err
 	}
