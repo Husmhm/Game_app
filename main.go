@@ -36,6 +36,9 @@ func main() {
 		},
 	}
 	authService, userService := setupServices(cfg)
+	// TODO add command for migrations
+	//mgr := migrator.New(cfg.Mysql)
+	//mgr.Up()
 
 	server := httpsever.New(cfg, authService, userService)
 	server.Serve()
