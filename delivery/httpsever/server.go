@@ -3,6 +3,7 @@ package httpsever
 import (
 	"fmt"
 	"gameApp/config"
+	"gameApp/delivery/httpsever/userhandler"
 	"gameApp/service/authservice"
 	"gameApp/service/userservice"
 	"gameApp/vlidator/uservalidator"
@@ -11,18 +12,14 @@ import (
 )
 
 type Server struct {
-	config        config.Config
-	authSvc       authservice.Service
-	userSvc       userservice.Service
-	userValidator uservalidator.Validator
+	config      config.Config
+	userhandler userhandler.Handler
 }
 
 func New(config config.Config, authSvc authservice.Service, userSvc userservice.Service, userValidator uservalidator.Validator) Server {
 	return Server{
-		config:        config,
-		authSvc:       authSvc,
-		userSvc:       userSvc,
-		userValidator: userValidator,
+		config:      config,
+		userhandler: userhandler.New(authSvc, userSvc, userValidator),
 	}
 }
 
@@ -34,12 +31,7 @@ func (s Server) Serve() {
 
 	// Routes
 	e.GET("/health-check", s.healthCheck)
-
-	userGroup := e.Group("/users")
-
-	userGroup.POST("/register", s.userRegister)
-	userGroup.POST("/login", s.userLogin)
-	userGroup.GET("/profile", s.userProfile)
+	s.userhandler.SetUserRoutes(e)
 
 	// Start server
 	e.Logger.Fatal(e.Start(fmt.Sprintf("localhost:%d", s.config.HTTPServer.Port)))
