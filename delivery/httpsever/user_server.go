@@ -31,7 +31,7 @@ func (s Server) userRegister(c echo.Context) error {
 }
 
 func (s Server) userLogin(c echo.Context) error {
-	var req userservice.LoginRequest
+	var req dto.LoginRequest
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
