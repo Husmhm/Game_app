@@ -20,7 +20,7 @@ const (
 
 func main() {
 	cfg := config.Config{
-		HTTPServer: config.HTTPServer{Port: 8088},
+		HTTPServer: config.HTTPServer{Port: 8080},
 		Auth: authservice.Config{
 			SignKey:               Jwt_SignKey,
 			AccessExpirationTime:  AccessTokenExpireDuration,

@@ -2,18 +2,21 @@ package userhandler
 
 import (
 	"gameApp/param"
+	"gameApp/pkg/constant"
 	"gameApp/pkg/httpmsg"
+	"gameApp/service/authservice"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
+func getClaims(c echo.Context) *authservice.Claims {
+	return c.Get(constant.AuthMiddleWareConrexKey).(*authservice.Claims)
+}
+
 func (h Handler) userProfile(c echo.Context) error {
 
-	authToken := c.Request().Header.Get("Authorization")
-	claims, err := h.authSvc.ParseToken(authToken)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
-	}
+	claims := getClaims(c)
+
 	resp, err := h.userSvc.Profile(param.ProfileRequest{UserID: claims.UserID})
 
 	if err != nil {
