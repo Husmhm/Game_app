@@ -2,12 +2,12 @@ package userservice
 
 import (
 	"fmt"
-	"gameApp/dto"
 	"gameApp/entity"
+	"gameApp/param"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error) {
+func (s Service) Register(req param.RegisterRequest) (param.RegisterResponse, error) {
 	// TODO - We should verify phone number by verification code
 	//validate phone number
 
@@ -16,7 +16,7 @@ func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error)
 	// TODO - chevk the password with regex pattern
 	// validate password
 	if len(req.Password) < 8 {
-		return dto.RegisterResponse{}, fmt.Errorf("password lentgth should be greater than 8")
+		return param.RegisterResponse{}, fmt.Errorf("password lentgth should be greater than 8")
 	}
 	// hash password by bycript
 	pass := []byte(req.Password)
@@ -34,7 +34,7 @@ func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error)
 	}
 	createdUser, err := s.repo.Register(user)
 	if err != nil {
-		return dto.RegisterResponse{}, fmt.Errorf("unexpected error : %w", err)
+		return param.RegisterResponse{}, fmt.Errorf("unexpected error : %w", err)
 	}
 
 	// return created user
@@ -43,7 +43,7 @@ func (s Service) Register(req dto.RegisterRequest) (dto.RegisterResponse, error)
 	//resp.User.PhoneNumber = createdUser.PhoneNumber
 	//resp.User.Name = createdUser.Name
 
-	return dto.RegisterResponse{User: dto.UserInfo{
+	return param.RegisterResponse{User: param.UserInfo{
 		ID:          createdUser.ID,
 		PhoneNumber: createdUser.PhoneNumber,
 		Name:        createdUser.Name,

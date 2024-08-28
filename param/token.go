@@ -1,4 +1,4 @@
-package dto
+package param
 
 // generate jwt token
 type Tokens struct {
