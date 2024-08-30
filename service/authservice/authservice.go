@@ -9,11 +9,11 @@ import (
 )
 
 type Config struct {
-	SignKey               string
-	AccessExpirationTime  time.Duration
-	RefreshExpirationTime time.Duration
-	AccessTokenSubject    string
-	RefreshTokenSubject   string
+	SignKey               string        `koanf:"sign_key"`
+	AccessExpirationTime  time.Duration `koanf:"access_expiration_time"`
+	RefreshExpirationTime time.Duration `koanf:"refresh_expiration_time"`
+	AccessTokenSubject    string        `koanf:"access_subject"`
+	RefreshTokenSubject   string        `koanf:"refresh_subject"`
 }
 
 type Service struct {
