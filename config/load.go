@@ -22,8 +22,10 @@ func Load(configPath string) *Config {
 	k.Load(file.Provider(configPath), yaml.Parser())
 
 	k.Load(env.Provider("GAMEAPP_", ".", func(s string) string {
-		return strings.Replace(strings.ToLower(
+		str := strings.Replace(strings.ToLower(
 			strings.TrimPrefix(s, "GAMEAPP_")), "_", ".", -1)
+		// auth_sign__key => auth.sign..key => auth.sign_key
+		return strings.Replace(str, "..", "_", -1)
 	}), nil)
 
 	var cfg Config
