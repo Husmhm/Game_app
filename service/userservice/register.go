@@ -25,19 +25,20 @@ func (s Service) Register(req param.RegisterRequest) (param.RegisterResponse, er
 	if err != nil {
 		panic(err)
 	}
-	// created new user in storage
+	// created new mysqluser in storage
 	user := entity.User{
 		ID:          0,
 		PhoneNumber: req.PhoneNumber,
 		Name:        req.Name,
 		Password:    hashStr,
+		Role:        entity.UserRole,
 	}
 	createdUser, err := s.repo.Register(user)
 	if err != nil {
 		return param.RegisterResponse{}, fmt.Errorf("unexpected error : %w", err)
 	}
 
-	// return created user
+	// return created mysqluser
 	//var resp RegisterResponse
 	//resp.User.ID = createdUser.ID
 	//resp.User.PhoneNumber = createdUser.PhoneNumber

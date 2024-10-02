@@ -8,5 +8,5 @@ const (
 	RefreshTokenExpireDuration = time.Hour * 24 * 7
 	AccessTokenSubject         = "at"
 	RefreshTokenSubject        = "rt"
-	AuthMiddleWareConrexKey    = "claims"
+	AuthMiddleWareConrexKey    = "claim"
 )

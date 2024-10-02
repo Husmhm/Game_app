@@ -28,11 +28,11 @@ func New(cfg Config) Service {
 }
 
 func (s Service) CreateAccessToken(user entity.User) (string, error) {
-	return s.createToken(user.ID, s.config.AccessExpirationTime, s.config.AccessTokenSubject)
+	return s.createToken(user.ID, user.Role, s.config.AccessExpirationTime, s.config.AccessTokenSubject)
 }
 
 func (s Service) CreateRefreshToken(user entity.User) (string, error) {
-	return s.createToken(user.ID, s.config.RefreshExpirationTime, s.config.RefreshTokenSubject)
+	return s.createToken(user.ID, user.Role, s.config.RefreshExpirationTime, s.config.RefreshTokenSubject)
 }
 
 func (s Service) ParseToken(bearerToken string) (*Claims, error) {
@@ -54,17 +54,18 @@ func (s Service) ParseToken(bearerToken string) (*Claims, error) {
 	}
 }
 
-func (s Service) createToken(userID uint, expireDuratipn time.Duration, subject string) (string, error) {
+func (s Service) createToken(userID uint, role entity.Role, expireDuratipn time.Duration, subject string) (string, error) {
 	// create a signer for rsa 256
 	// TODO - replace with rsa 256 RS256 - https://github.com/golang-jwt/jwt/blob/main/http_example_test.go
 
-	// set our claims
+	// set our claim
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expireDuratipn)),
 			Subject:   subject,
 		},
 		UserID: userID,
+		Role:   role,
 	}
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

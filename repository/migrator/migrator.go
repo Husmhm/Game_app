@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"gameApp/repository/mysql"
+	_ "github.com/go-sql-driver/mysql"
 	migrate "github.com/rubenv/sql-migrate"
 )
 
@@ -18,7 +19,7 @@ func New(dbConfig mysql.Config) Migrator {
 	migrations := &migrate.FileMigrationSource{
 		Dir: "./repository/mysql/migrations",
 	}
-	return Migrator{dbConfig: dbConfig, migrations: migrations}
+	return Migrator{dbConfig: dbConfig, dialect: "mysql", migrations: migrations}
 }
 
 func (m Migrator) Up() {

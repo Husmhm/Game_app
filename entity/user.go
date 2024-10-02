@@ -6,4 +6,5 @@ type User struct {
 	Name        string `json:"name"`
 	// Password always keep hash password.
 	Password string
+	Role     Role
 }

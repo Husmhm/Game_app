@@ -4,8 +4,13 @@ import (
 	"fmt"
 	"gameApp/config"
 	"gameApp/delivery/httpsever"
+	"gameApp/repository/migrator"
 	"gameApp/repository/mysql"
+	"gameApp/repository/mysql/mysqlaccesscontrol"
+	"gameApp/repository/mysql/mysqluser"
+	"gameApp/service/authorizationservice"
 	"gameApp/service/authservice"
+	"gameApp/service/backofficeuserservice"
 	"gameApp/service/userservice"
 	"gameApp/vlidator/uservalidator"
 	"time"
@@ -42,22 +47,30 @@ func main() {
 			DBName:   "gameapp_db",
 		},
 	}
-	authService, userService, userValidator := setupServices(cfg)
+	authService, userService, userValidator, authorizationSvc, backOfficeUserSvc := setupServices(cfg)
 	// TODO add command for migrations
-	//mgr := migrator.New(cfg.Mysql)
-	//mgr.Up()
+	mgr := migrator.New(cfg.Mysql)
+	mgr.Up()
 
-	server := httpsever.New(cfg, authService, userService, userValidator)
+	server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc)
 	server.Serve()
 }
 
-func setupServices(cfg config.Config) (authservice.Service, userservice.Service, uservalidator.Validator) {
+func setupServices(cfg config.Config) (authservice.Service, userservice.Service, uservalidator.Validator,
+	authorizationservice.Service, backofficeuserservice.Service) {
 	authSvc := authservice.New(cfg.Auth)
 
 	MysqlRepo := mysql.New(cfg.Mysql)
-	uV := uservalidator.New(MysqlRepo)
 
-	userSvc := userservice.NewService(authSvc, MysqlRepo)
-	return authSvc, userSvc, uV
+	userMysql := mysqluser.New(MysqlRepo)
+	uV := uservalidator.New(userMysql)
+	userSvc := userservice.NewService(authSvc, userMysql)
+
+	backOfficeUserSvc := backofficeuserservice.New()
+
+	aclMysql := mysqlaccesscontrol.New(MysqlRepo)
+	authorizationSvc := authorizationservice.New(aclMysql)
+
+	return authSvc, userSvc, uV, authorizationSvc, backOfficeUserSvc
 
 }
