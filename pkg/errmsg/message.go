@@ -8,5 +8,6 @@ const (
 	ErrorMsgPhoneNumberIsNotValid  = "Phone number is not valid"
 	ErrorMsgNameLength             = "name isnt valid"
 	ErrorMsgInvalidInput           = "input invalid"
-	ErrorMsgUserNotAllowed         = "mysqluser not allowed"
+	ErrorMsgUserNotAllowed         = "user not allowed"
+	ErrorMsgCategoryNotValid       = "category not valid"
 )

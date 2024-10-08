@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func Load(configPath string) *Config {
+func Load(configPath string) Config {
 	// Global koanf instance. Use "." as the key path delimiter. This can be "/" or any character.
 	var k = koanf.New(".")
 
@@ -33,6 +33,6 @@ func Load(configPath string) *Config {
 		panic(err)
 	}
 
-	return &cfg
+	return cfg
 
 }

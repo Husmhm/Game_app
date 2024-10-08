@@ -1,7 +1,6 @@
 package authservice
 
 import (
-	"fmt"
 	"gameApp/entity"
 	"github.com/golang-jwt/jwt/v4"
 	"strings"
@@ -36,9 +35,8 @@ func (s Service) CreateRefreshToken(user entity.User) (string, error) {
 }
 
 func (s Service) ParseToken(bearerToken string) (*Claims, error) {
-	fmt.Println("old string", bearerToken)
+
 	tokenStr := strings.Replace(bearerToken, "Bearer ", "", 1)
-	fmt.Println("new string", tokenStr)
 
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(s.config.SignKey), nil
