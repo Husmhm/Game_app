@@ -48,5 +48,7 @@ func (s Server) Serve() {
 	s.matchingHandler.SetRoutes(e)
 
 	// Start server
-	e.Logger.Fatal(e.Start(fmt.Sprintf("localhost:%d", s.config.HTTPServer.Port)))
+	address := fmt.Sprintf("localhost:%d", s.config.HTTPServer.Port)
+	fmt.Printf("star echo server on %s\n", address)
+	e.Logger.Fatal(e.Start(address))
 }

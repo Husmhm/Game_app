@@ -10,6 +10,7 @@ import (
 	"gameApp/repository/mysql/mysqlaccesscontrol"
 	"gameApp/repository/mysql/mysqluser"
 	"gameApp/repository/redis/redismatching"
+	"gameApp/scheduler"
 	"gameApp/service/authorizationservice"
 	"gameApp/service/authservice"
 	"gameApp/service/backofficeuserservice"
@@ -17,6 +18,9 @@ import (
 	"gameApp/service/userservice"
 	"gameApp/vlidator/matchingvalidator"
 	"gameApp/vlidator/uservalidator"
+	"os"
+	"os/signal"
+	"time"
 )
 
 func main() {
@@ -31,8 +35,25 @@ func main() {
 	mgr := migrator.New(cfg.Mysql)
 	mgr.Up()
 
-	server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, mathingSvc, matchingV)
-	server.Serve()
+	go func() {
+		server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, mathingSvc, matchingV)
+		server.Serve()
+	}()
+
+	done := make(chan bool)
+
+	go func() {
+		sch := scheduler.New()
+		sch.Start(done)
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	fmt.Println("\n recieved interrupt signal, shutting down gracefully...")
+	done <- true
+	time.Sleep(5 * time.Second)
+
 }
 
 func setupServices(cfg config.Config) (authservice.Service, userservice.Service, uservalidator.Validator,
