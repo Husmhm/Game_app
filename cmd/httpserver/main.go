@@ -10,7 +10,6 @@ import (
 	"gameApp/repository/mysql/mysqlaccesscontrol"
 	"gameApp/repository/mysql/mysqluser"
 	"gameApp/repository/redis/redismatching"
-	"gameApp/scheduler"
 	"gameApp/service/authorizationservice"
 	"gameApp/service/authservice"
 	"gameApp/service/backofficeuserservice"
@@ -18,10 +17,10 @@ import (
 	"gameApp/service/userservice"
 	"gameApp/vlidator/matchingvalidator"
 	"gameApp/vlidator/uservalidator"
+	"github.com/labstack/echo/v4"
 	"golang.org/x/net/context"
 	"os"
 	"os/signal"
-	"time"
 )
 
 func main() {
@@ -36,16 +35,10 @@ func main() {
 	mgr := migrator.New(cfg.Mysql)
 	mgr.Up()
 
-	server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, mathingSvc, matchingV)
+	var httpServer *echo.Echo
 	go func() {
-		server.Serve()
-	}()
-
-	done := make(chan bool)
-
-	go func() {
-		sch := scheduler.New()
-		sch.Start(done)
+		server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, mathingSvc, matchingV)
+		httpServer = server.Serve()
 	}()
 
 	quit := make(chan os.Signal, 1)
@@ -55,12 +48,12 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Application.GraceFullShutdownTimeout)
 	defer cancel()
 
-	if err := server.Router.Shutdown(ctx); err != nil {
+	if err := httpServer.Shutdown(ctx); err != nil {
 		fmt.Println("http server shutdown error", err)
 	}
 	fmt.Println("\n recieved interrupt signal, shutting down gracefully...")
-	done <- true
-	time.Sleep(cfg.Application.GraceFullShutdownTimeout)
+
+	<-ctx.Done()
 
 }
 
