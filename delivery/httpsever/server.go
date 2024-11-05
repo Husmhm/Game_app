@@ -51,6 +51,8 @@ func (s Server) Serve() {
 	// Start server
 	address := fmt.Sprintf("localhost:%d", s.config.HTTPServer.Port)
 	fmt.Printf("star echo server on %s\n", address)
-	s.Router.Logger.Fatal(s.Router.Start(address))
+	if err := s.Router.Start(address); err != nil {
+		fmt.Printf("router start server error: %v\n", err)
+	}
 
 }

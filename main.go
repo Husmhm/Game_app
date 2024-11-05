@@ -21,6 +21,7 @@ import (
 	"golang.org/x/net/context"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 )
 
@@ -31,21 +32,23 @@ func main() {
 	fmt.Printf("cfg2: %+v\n", cfg)
 
 	// TODO -add struct and add these returned items struct field.
-	authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, mathingSvc, matchingV := setupServices(cfg)
+	authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV := setupServices(cfg)
 	// TODO add command for migrations
 	mgr := migrator.New(cfg.Mysql)
 	mgr.Up()
 
-	server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, mathingSvc, matchingV)
+	server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV)
 	go func() {
 		server.Serve()
 	}()
 
 	done := make(chan bool)
-
+	var wg sync.WaitGroup
 	go func() {
-		sch := scheduler.New()
-		sch.Start(done)
+		sch := scheduler.New(matchingSvc)
+
+		wg.Add(1)
+		sch.Start(done, &wg)
 	}()
 
 	quit := make(chan os.Signal, 1)
@@ -62,6 +65,11 @@ func main() {
 	done <- true
 	time.Sleep(cfg.Application.GraceFullShutdownTimeout)
 
+	// TODO- does order of ctx.done &wg.wait matter?
+	ctx.Done()
+
+	wg.Wait()
+	time.Sleep(2 * time.Second)
 }
 
 func setupServices(cfg config.Config) (authservice.Service, userservice.Service, uservalidator.Validator,

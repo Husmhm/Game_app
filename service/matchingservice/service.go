@@ -35,5 +35,8 @@ func (s Service) AddToWatingList(req param.AddToWatingListRequest) (param.AddToW
 		return param.AddToWatingListResponse{}, richerror.New(op).WithErr(err).WithKind(richerror.KindUnexpected)
 	}
 	return param.AddToWatingListResponse{Timeout: s.config.WatingTimeout}, nil
+}
 
+func (s Service) MatchWaitedUsers(req param.MatchWaitedUsersRequest) (param.MatchWaitedUsersResponse, error) {
+	return param.MatchWaitedUsersResponse{}, nil
 }
