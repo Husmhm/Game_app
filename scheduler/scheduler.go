@@ -9,13 +9,19 @@ import (
 	"time"
 )
 
+type Config struct {
+	MatchWaitedUsersIntervalInSeconds int `koanf:"match_waited_users_interval_in_seconds"`
+}
+
 type Scheduler struct {
+	config   Config
 	sch      *gocron.Scheduler
 	matchSvc matchingservice.Service
 }
 
-func New(matchSvc matchingservice.Service) Scheduler {
+func New(config Config, matchSvc matchingservice.Service) Scheduler {
 	return Scheduler{
+		config:   config,
 		sch:      gocron.NewScheduler(time.UTC),
 		matchSvc: matchSvc,
 	}
@@ -23,7 +29,7 @@ func New(matchSvc matchingservice.Service) Scheduler {
 
 func (sc Scheduler) Start(done <-chan bool, wg *sync.WaitGroup) {
 	defer wg.Done()
-	sc.sch.Every(5).Second().Do(sc.MatchWaitedUsers)
+	sc.sch.Every(sc.config.MatchWaitedUsersIntervalInSeconds).Second().Do(sc.MatchWaitedUsers)
 
 	sc.sch.StartAsync()
 	fmt.Println("Scheduler start")

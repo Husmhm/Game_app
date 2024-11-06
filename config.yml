@@ -20,3 +20,10 @@ redis:
 
 matching_service:
   wating_timeout: "2m"
+
+presence_service:
+  expiration_time: "1h"
+  prefix: "presence"
+
+schduller:
+  match_waited_users_interval_in_seconds: 30

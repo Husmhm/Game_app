@@ -10,5 +10,5 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	// we can use skipper
 	userGroup.POST("/register", h.userRegister)
 	userGroup.POST("/login", h.userLogin)
-	userGroup.GET("/profile", h.userProfile, middleware.Auth(h.authSvc, h.authConfig))
+	userGroup.GET("/profile", h.userProfile, middleware.Auth(h.authSvc, h.authConfig), middleware.UpsertPresence(h.presenceSvc))
 }

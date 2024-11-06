@@ -17,7 +17,6 @@ import (
 	"gameApp/service/userservice"
 	"gameApp/vlidator/matchingvalidator"
 	"gameApp/vlidator/uservalidator"
-	"github.com/labstack/echo/v4"
 	"golang.org/x/net/context"
 	"os"
 	"os/signal"
@@ -30,15 +29,14 @@ func main() {
 	fmt.Printf("cfg2: %+v\n", cfg)
 
 	// TODO -add struct and add these returned items struct field.
-	authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, mathingSvc, matchingV := setupServices(cfg)
+	authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV := setupServices(cfg)
 	// TODO add command for migrations
 	mgr := migrator.New(cfg.Mysql)
 	mgr.Up()
 
-	var httpServer *echo.Echo
+	server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV)
 	go func() {
-		server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, mathingSvc, matchingV)
-		httpServer = server.Serve()
+		server.Serve()
 	}()
 
 	quit := make(chan os.Signal, 1)
@@ -48,7 +46,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Application.GraceFullShutdownTimeout)
 	defer cancel()
 
-	if err := httpServer.Shutdown(ctx); err != nil {
+	if err := server.Router.Shutdown(ctx); err != nil {
 		fmt.Println("http server shutdown error", err)
 	}
 	fmt.Println("\n recieved interrupt signal, shutting down gracefully...")

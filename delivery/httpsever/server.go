@@ -10,6 +10,7 @@ import (
 	"gameApp/service/authservice"
 	"gameApp/service/backofficeuserservice"
 	"gameApp/service/matchingservice"
+	"gameApp/service/presenceservice"
 	"gameApp/service/userservice"
 	"gameApp/vlidator/matchingvalidator"
 	"gameApp/vlidator/uservalidator"
@@ -27,12 +28,12 @@ type Server struct {
 
 func New(config config.Config, authSvc authservice.Service, userSvc userservice.Service, userValidator uservalidator.Validator,
 	authorizationSvc authorizationservice.Service, backofficeuserSvc backofficeuserservice.Service,
-	matchSvc matchingservice.Service, matchvalidator matchingvalidator.Validator) Server {
+	matchSvc matchingservice.Service, matchvalidator matchingvalidator.Validator, presenceSvc presenceservice.Service) Server {
 	return Server{
 		config:                config,
-		userhandler:           userhandler.New(config.Auth, authSvc, userSvc, userValidator),
+		userhandler:           userhandler.New(config.Auth, authSvc, userSvc, userValidator, presenceSvc),
 		backofficeUserHandler: backofficeuserhandler.New(config.Auth, authSvc, authorizationSvc, backofficeuserSvc),
-		matchingHandler:       matchinghandler.New(config.Auth, authSvc, matchSvc, matchvalidator),
+		matchingHandler:       matchinghandler.New(config.Auth, authSvc, matchSvc, matchvalidator, presenceSvc),
 		Router:                echo.New(),
 	}
 }

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"gameApp/entity"
 	"gameApp/pkg/richerror"
+	"gameApp/pkg/timestamp"
 	"github.com/redis/go-redis/v9"
-	"time"
 )
 
 // TODO - add to config in usecase layer...
@@ -16,7 +16,7 @@ func (d DB) AddToWatingList(userID uint, category entity.Category) error {
 	const op = "redismatching.AddToWatingList"
 
 	_, err := d.adapter.Client().ZAdd(context.Background(), fmt.Sprintf("%s:%s", WatingListPrefix, category), redis.Z{
-		Score:  float64(time.Now().UnixMicro()),
+		Score:  float64(timestamp.Now()),
 		Member: fmt.Sprintf("%d", userID),
 	}).Result()
 

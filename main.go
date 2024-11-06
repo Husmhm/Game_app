@@ -10,11 +10,13 @@ import (
 	"gameApp/repository/mysql/mysqlaccesscontrol"
 	"gameApp/repository/mysql/mysqluser"
 	"gameApp/repository/redis/redismatching"
+	"gameApp/repository/redis/redispresence"
 	"gameApp/scheduler"
 	"gameApp/service/authorizationservice"
 	"gameApp/service/authservice"
 	"gameApp/service/backofficeuserservice"
 	"gameApp/service/matchingservice"
+	"gameApp/service/presenceservice"
 	"gameApp/service/userservice"
 	"gameApp/vlidator/matchingvalidator"
 	"gameApp/vlidator/uservalidator"
@@ -32,12 +34,13 @@ func main() {
 	fmt.Printf("cfg2: %+v\n", cfg)
 
 	// TODO -add struct and add these returned items struct field.
-	authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV := setupServices(cfg)
+	authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV, presenceSvc := setupServices(cfg)
+
 	// TODO add command for migrations
 	mgr := migrator.New(cfg.Mysql)
 	mgr.Up()
 
-	server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV)
+	server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV, presenceSvc)
 	go func() {
 		server.Serve()
 	}()
@@ -45,7 +48,7 @@ func main() {
 	done := make(chan bool)
 	var wg sync.WaitGroup
 	go func() {
-		sch := scheduler.New(matchingSvc)
+		sch := scheduler.New(cfg.Schduller, matchingSvc)
 
 		wg.Add(1)
 		sch.Start(done, &wg)
@@ -74,7 +77,7 @@ func main() {
 
 func setupServices(cfg config.Config) (authservice.Service, userservice.Service, uservalidator.Validator,
 	authorizationservice.Service, backofficeuserservice.Service,
-	matchingservice.Service, matchingvalidator.Validator) {
+	matchingservice.Service, matchingvalidator.Validator, presenceservice.Service) {
 	authSvc := authservice.New(cfg.Auth)
 
 	MysqlRepo := mysql.New(cfg.Mysql)
@@ -94,6 +97,9 @@ func setupServices(cfg config.Config) (authservice.Service, userservice.Service,
 	matchingRepo := redismatching.New(redisAdapter)
 	matchingSvc := matchingservice.New(cfg.MatchingService, matchingRepo)
 
-	return authSvc, userSvc, uV, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV
+	presenceRepo := redispresence.New(redisAdapter)
+	presenceSvc := presenceservice.New(cfg.PresenceService, presenceRepo)
+
+	return authSvc, userSvc, uV, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV, presenceSvc
 
 }
