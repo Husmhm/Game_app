@@ -37,3 +37,8 @@ func (s Service) Upsert(ctx context.Context, req param.UpsertPresenceRequest) (p
 	}
 	return param.UpsertPresenceResponse{}, nil
 }
+
+func (s Service) GetPresence(ctx context.Context, request param.GetPresenceRequest) (param.GetPresenceResponse, error) {
+	//TODO implement me
+	return param.GetPresenceResponse{}, nil
+}
