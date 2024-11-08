@@ -3,7 +3,8 @@ package entity
 type Category string
 
 const (
-	FootballCategory Category = "football"
+	FootballCategory = "football"
+	HistoryCategory  = "history"
 )
 
 func (c Category) IsValid() bool {
@@ -12,4 +13,8 @@ func (c Category) IsValid() bool {
 		return true
 	}
 	return false
+}
+
+func CategoryList() []Category {
+	return []Category{FootballCategory, HistoryCategory}
 }

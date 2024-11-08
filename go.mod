@@ -16,6 +16,7 @@ require (
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/rubenv/sql-migrate v1.7.0
+	github.com/thoas/go-funk v0.9.3
 	golang.org/x/crypto v0.24.0
 	golang.org/x/net v0.24.0
 )

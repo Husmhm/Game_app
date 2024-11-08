@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"fmt"
 	"gameApp/param"
 	"gameApp/service/matchingservice"
@@ -42,5 +43,12 @@ func (sc Scheduler) Start(done <-chan bool, wg *sync.WaitGroup) {
 
 func (sc Scheduler) MatchWaitedUsers() {
 	fmt.Println("Scheduler MatchWaitedUsers")
-	sc.matchSvc.MatchWaitedUsers(param.MatchWaitedUsersRequest{})
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	_, err := sc.matchSvc.MatchWaitedUsers(ctx, param.MatchWaitedUsersRequest{})
+	if err != nil {
+		// TODO- log err
+		// TODO- upate metrics
+		fmt.Println("Scheduler MatchWaitedUsers err:", err)
+	}
 }
