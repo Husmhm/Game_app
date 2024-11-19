@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	presenceClient "gameApp/adapter/presence"
 	"gameApp/adapter/redis"
@@ -21,7 +22,6 @@ import (
 	"gameApp/service/userservice"
 	"gameApp/vlidator/matchingvalidator"
 	"gameApp/vlidator/uservalidator"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"os"
 	"os/signal"
