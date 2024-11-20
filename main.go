@@ -7,7 +7,6 @@ import (
 	"gameApp/adapter/redis"
 	"gameApp/config"
 	"gameApp/delivery/httpsever"
-	"gameApp/repository/migrator"
 	"gameApp/repository/mysql"
 	"gameApp/repository/mysql/mysqlaccesscontrol"
 	"gameApp/repository/mysql/mysqluser"
@@ -45,8 +44,6 @@ func main() {
 	authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV, presenceSvc := setupServices(cfg, conn)
 
 	// TODO add command for migrations
-	mgr := migrator.New(cfg.Mysql)
-	mgr.Up()
 
 	server := httpsever.New(cfg, authService, userService, userValidator, authorizationSvc, backOfficeUserSvc, matchingSvc, matchingV, presenceSvc)
 	go func() {
