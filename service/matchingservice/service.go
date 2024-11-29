@@ -5,17 +5,22 @@ import (
 	"fmt"
 	"gameApp/entity"
 	"gameApp/param"
+	"gameApp/pkg/protobufencoder"
 	"gameApp/pkg/richerror"
 	"gameApp/pkg/timestamp"
 	"github.com/labstack/gommon/log"
-	"github.com/thoas/go-funk"
 	"sync"
 	"time"
 )
 
+type Publisher interface {
+	Publish(event entity.Event, payload string)
+}
+
 type Repo interface {
 	AddToWatingList(userID uint, category entity.Category) error
 	GetWaitingListByCategory(ctx context.Context, category entity.Category) ([]entity.WaitingMember, error)
+	RemoveUsersFromWaitingList(category entity.Category, userIDs []uint)
 }
 
 type PresenceClient interface {
@@ -26,17 +31,19 @@ type Service struct {
 	config         Config
 	repo           Repo
 	PresenceClient PresenceClient
+	pub            Publisher
 }
 
 type Config struct {
 	WatingTimeout time.Duration `koanf:"wating_timeout"`
 }
 
-func New(config Config, repo Repo, PresenceClient PresenceClient) Service {
+func New(config Config, repo Repo, PresenceClient PresenceClient, pub Publisher) Service {
 	return Service{
 		config:         config,
 		repo:           repo,
 		PresenceClient: PresenceClient,
+		pub:            pub,
 	}
 }
 
@@ -92,15 +99,21 @@ func (s Service) match(ctx context.Context, category entity.Category, wg *sync.W
 	for _, l := range presenceList.Items {
 		userIDs = append(presenceUserIDs, l.UserID)
 	}
-
+	var toBeRemovedUsers = make([]uint, 0)
 	var finalList = make([]entity.WaitingMember, 0)
 	for _, l := range list {
-		if funk.Contains(presenceUserIDs, l.UserID) && l.TimeStamp < timestamp.Add(-20*time.Second) {
+		LastOnlineTimestamp, ok := getPresenceitem(presenceList, l.UserID)
+		// TODO - add 20 , 300 to config
+		if ok && LastOnlineTimestamp < timestamp.Add(-20*time.Second) && l.TimeStamp > timestamp.Add(-300*time.Second) {
 			finalList = append(finalList, l)
 		} else {
-			//remove from list
+			toBeRemovedUsers = append(toBeRemovedUsers, l.UserID)
 		}
 	}
+
+	go s.repo.RemoveUsersFromWaitingList(category, toBeRemovedUsers)
+
+	matchedUsersToBeRemoved := make([]uint, 0)
 
 	for i := 0; i < len(finalList)-1; i = i + 2 {
 
@@ -109,8 +122,20 @@ func (s Service) match(ctx context.Context, category entity.Category, wg *sync.W
 			UserIDs:  []uint{finalList[i].UserID, finalList[i+1].UserID},
 		}
 		fmt.Println("mu", mu)
-
+		go s.pub.Publish(entity.MatchingUsersMatchedEvent, protobufencoder.EncodeEvent(entity.MatchingUsersMatchedEvent, mu))
 		// publish a new event for mu
+
 		//remove mu users from wiating list
+		matchedUsersToBeRemoved = append(matchedUsersToBeRemoved, mu.UserIDs...)
 	}
+	go s.repo.RemoveUsersFromWaitingList(category, matchedUsersToBeRemoved)
+}
+
+func getPresenceitem(presenceList param.GetPresenceResponse, userID uint) (int64, bool) {
+	for _, itemt := range presenceList.Items {
+		if itemt.UserID == userID {
+			return itemt.TimeStamp, true
+		}
+	}
+	return 0, false
 }
