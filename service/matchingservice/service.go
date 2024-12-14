@@ -3,6 +3,7 @@ package matchingservice
 import (
 	"context"
 	"fmt"
+	"gameApp/contract/broker"
 	"gameApp/entity"
 	"gameApp/param"
 	"gameApp/pkg/protobufencoder"
@@ -12,10 +13,6 @@ import (
 	"sync"
 	"time"
 )
-
-type Publisher interface {
-	Publish(event entity.Event, payload string)
-}
 
 type Repo interface {
 	AddToWatingList(userID uint, category entity.Category) error
@@ -31,14 +28,14 @@ type Service struct {
 	config         Config
 	repo           Repo
 	PresenceClient PresenceClient
-	pub            Publisher
+	pub            broker.Publisher
 }
 
 type Config struct {
 	WatingTimeout time.Duration `koanf:"wating_timeout"`
 }
 
-func New(config Config, repo Repo, PresenceClient PresenceClient, pub Publisher) Service {
+func New(config Config, repo Repo, PresenceClient PresenceClient, pub broker.Publisher) Service {
 	return Service{
 		config:         config,
 		repo:           repo,

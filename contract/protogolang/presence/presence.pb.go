@@ -7,8 +7,8 @@
 package presence
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	protoreflect "google.protogolang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.protogolang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 )

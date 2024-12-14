@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"gameApp/adapter/redis"
 	"gameApp/config"
-	"gameApp/contract/golang/matching"
+	"gameApp/contract/protogolang/matching"
 	"gameApp/entity"
 	"gameApp/pkg/slice"
 	"google.golang.org/protobuf/proto"
